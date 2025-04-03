@@ -5,6 +5,7 @@ import matplotlib.pyplot as plt
 import plotly.express as px
 from crop_recommendation_model import train_model, predict_crop
 from crop_data import crop_info, get_dataset, fertilizer_info, recommend_fertilizer
+from pdf_generator import create_pdf_report, get_download_link
 
 # Set page configuration
 st.set_page_config(
@@ -21,6 +22,7 @@ This application helps farmers optimize their agricultural practices with:
 1. **Crop Recommendations**: Determine the optimal crops to plant based on local environmental conditions
 2. **Fertilizer Recommendations**: Get personalized fertilizer advice based on soil nutrient levels and selected crops
 3. **Soil Analysis**: Visualize soil nutrient deficiencies with interactive charts
+4. **PDF Reports**: Download comprehensive reports for offline reference and sharing
 
 Enter your field's characteristics in the sidebar to receive personalized recommendations.
 """)
@@ -244,6 +246,51 @@ if submit_button:
                         st.info("Your soil has adequate nutrient levels. No significant deficiencies detected.")
                 else:
                     st.info("Your soil has adequate nutrient levels. No significant deficiencies detected.")
+                    
+            # Generate PDF Report Section
+            st.header("PDF Report")
+            st.write("Get a comprehensive PDF report of your crop and fertilizer recommendations for offline reference.")
+            
+            # Collect all data for the PDF report
+            field_conditions = {
+                'soil_type': soil_type,
+                'n_value': n_value,
+                'p_value': p_value,
+                'k_value': k_value,
+                'temperature': temperature,
+                'humidity': humidity,
+                'ph_value': ph_value,
+                'rainfall': rainfall
+            }
+            
+            # Soil analysis for PDF
+            soil_analysis = {
+                'n_value': n_value,
+                'p_value': p_value,
+                'k_value': k_value
+            }
+            
+            # Generate PDF
+            if st.button("Generate PDF Report"):
+                with st.spinner("Generating PDF Report..."):
+                    # Create the PDF report
+                    b64_pdf = create_pdf_report(
+                        field_conditions=field_conditions,
+                        top_crops=top_crops,
+                        top_probs=top_probs,
+                        fertilizer_recs=fertilizer_recs,
+                        soil_analysis=soil_analysis,
+                        optimal_levels=optimal_levels,
+                        crop_info=crop_info
+                    )
+                    
+                    # Display download link
+                    st.markdown(
+                        get_download_link(b64_pdf, "crop_fertilizer_report.pdf"),
+                        unsafe_allow_html=True
+                    )
+                    
+                    st.success("PDF Report Generated Successfully! Click the link above to download.")
         
 # Display educational information when no prediction is made yet
 if not submit_button:
@@ -254,6 +301,7 @@ if not submit_button:
     3. You'll receive personalized crop recommendations with confidence scores
     4. Get fertilizer recommendations based on soil nutrient levels and selected crops
     5. Review detailed information and visualizations for optimal agricultural decisions
+    6. Download a comprehensive PDF report for offline reference or sharing
     
     The model considers factors like soil nutrients (N, P, K), temperature, humidity, pH, and rainfall
     to determine which crops would thrive in your specific conditions and what fertilizers would 
