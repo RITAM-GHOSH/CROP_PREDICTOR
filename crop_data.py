@@ -268,3 +268,191 @@ crop_info = {
         "water_needs": "Moderate - sensitive to both drought and excessive moisture."
     }
 }
+
+# Fertilizer information dictionary
+fertilizer_info = {
+    "NPK 10-26-26": {
+        "description": "Balanced fertilizer with higher phosphorus and potassium content.",
+        "ideal_for": ["wheat", "barley", "oats"],
+        "n_content": "10%",
+        "p_content": "26%",
+        "k_content": "26%",
+        "application_rate": "200-250 kg/ha",
+        "best_time": "Pre-sowing or at sowing time"
+    },
+    "NPK 17-17-17": {
+        "description": "Balanced all-purpose fertilizer with equal amounts of N, P, and K.",
+        "ideal_for": ["maize", "cotton", "sugarcane"],
+        "n_content": "17%",
+        "p_content": "17%",
+        "k_content": "17%",
+        "application_rate": "250-300 kg/ha",
+        "best_time": "At planting or early growth stage"
+    },
+    "Urea": {
+        "description": "High nitrogen fertilizer ideal for leafy growth.",
+        "ideal_for": ["rice", "maize", "wheat", "vegetables"],
+        "n_content": "46%",
+        "p_content": "0%",
+        "k_content": "0%",
+        "application_rate": "100-150 kg/ha",
+        "best_time": "Multiple small applications during growing season"
+    },
+    "DAP (Diammonium Phosphate)": {
+        "description": "High phosphorus fertilizer with some nitrogen.",
+        "ideal_for": ["wheat", "rice", "vegetables", "fruits"],
+        "n_content": "18%",
+        "p_content": "46%",
+        "k_content": "0%",
+        "application_rate": "100-125 kg/ha",
+        "best_time": "Pre-sowing or at sowing time"
+    },
+    "MOP (Muriate of Potash)": {
+        "description": "High potassium fertilizer for fruit and root development.",
+        "ideal_for": ["potatoes", "sugarcane", "fruits", "vegetables"],
+        "n_content": "0%",
+        "p_content": "0%",
+        "k_content": "60-62%",
+        "application_rate": "75-100 kg/ha",
+        "best_time": "Pre-planting or during growth stage"
+    },
+    "SSP (Single Super Phosphate)": {
+        "description": "Provides phosphorus, sulfur, and calcium. Good for legumes.",
+        "ideal_for": ["pulses", "oilseeds", "millet"],
+        "n_content": "0%",
+        "p_content": "16%",
+        "k_content": "0%",
+        "application_rate": "200-250 kg/ha",
+        "best_time": "Pre-sowing or at sowing time"
+    },
+    "Ammonium Sulfate": {
+        "description": "Provides nitrogen and sulfur, good for sulfur-deficient soils.",
+        "ideal_for": ["rice", "vegetables", "tea", "coffee"],
+        "n_content": "21%",
+        "p_content": "0%",
+        "k_content": "0%",
+        "application_rate": "100-150 kg/ha",
+        "best_time": "Early to mid-growing season"
+    },
+    "NPK 14-35-14": {
+        "description": "High phosphorus formula good for root development and flowering.",
+        "ideal_for": ["vegetables", "fruits", "ornamentals"],
+        "n_content": "14%",
+        "p_content": "35%",
+        "k_content": "14%",
+        "application_rate": "200-250 kg/ha",
+        "best_time": "At planting and pre-flowering stage"
+    }
+}
+
+def recommend_fertilizer(n_value, p_value, k_value, crop=None):
+    """
+    Recommends appropriate fertilizers based on soil NPK values and optionally for a specific crop.
+    
+    Args:
+        n_value: Nitrogen content in soil (kg/ha)
+        p_value: Phosphorus content in soil (kg/ha)
+        k_value: Potassium content in soil (kg/ha)
+        crop: Optional - specific crop name for targeted recommendations
+        
+    Returns:
+        list: List of recommended fertilizers with rationale
+    """
+    recommendations = []
+    
+    # Define optimal ranges for different crops or use general ranges
+    optimal_n = 80
+    optimal_p = 40
+    optimal_k = 40
+    
+    # Adjust optimal values if crop is specified
+    if crop:
+        crop_lower = crop.lower()
+        if crop_lower in ["rice", "maize", "wheat"]:
+            optimal_n = 120
+            optimal_p = 60
+            optimal_k = 50
+        elif crop_lower in ["vegetables", "tomato", "potato", "cabbage"]:
+            optimal_n = 100
+            optimal_p = 80
+            optimal_k = 80
+        elif crop_lower in ["fruits", "mango", "apple", "banana"]:
+            optimal_n = 80
+            optimal_p = 60
+            optimal_k = 100
+        elif crop_lower in ["pulses", "chickpea", "lentil", "beans"]:
+            optimal_n = 40
+            optimal_p = 60
+            optimal_k = 40
+    
+    # Calculate deficiencies
+    n_deficit = max(0, optimal_n - n_value)
+    p_deficit = max(0, optimal_p - p_value)
+    k_deficit = max(0, optimal_k - k_value)
+    
+    # Determine which nutrients are most deficient
+    severe_n_deficiency = n_deficit > 30
+    severe_p_deficiency = p_deficit > 20
+    severe_k_deficiency = k_deficit > 20
+    
+    # Make recommendations based on deficiencies
+    if severe_n_deficiency and not severe_p_deficiency and not severe_k_deficiency:
+        recommendations.append({
+            "fertilizer": "Urea",
+            "rationale": f"Soil is primarily deficient in nitrogen (N deficit: {n_deficit} kg/ha). Urea provides high nitrogen content to promote leaf and stem growth."
+        })
+    
+    elif severe_p_deficiency and not severe_n_deficiency and not severe_k_deficiency:
+        recommendations.append({
+            "fertilizer": "DAP (Diammonium Phosphate)",
+            "rationale": f"Soil is primarily deficient in phosphorus (P deficit: {p_deficit} kg/ha). DAP provides high phosphorus content to promote root development and flowering."
+        })
+    
+    elif severe_k_deficiency and not severe_n_deficiency and not severe_p_deficiency:
+        recommendations.append({
+            "fertilizer": "MOP (Muriate of Potash)",
+            "rationale": f"Soil is primarily deficient in potassium (K deficit: {k_deficit} kg/ha). MOP provides high potassium content to promote fruit development and disease resistance."
+        })
+    
+    elif severe_n_deficiency and severe_p_deficiency and severe_k_deficiency:
+        recommendations.append({
+            "fertilizer": "NPK 17-17-17",
+            "rationale": f"Soil is deficient in all major nutrients (N: {n_deficit}, P: {p_deficit}, K: {k_deficit} kg/ha). A balanced NPK fertilizer will address all deficiencies."
+        })
+    
+    elif severe_p_deficiency and severe_k_deficiency:
+        recommendations.append({
+            "fertilizer": "NPK 10-26-26",
+            "rationale": f"Soil is deficient in phosphorus and potassium (P: {p_deficit}, K: {k_deficit} kg/ha). This fertilizer has higher P and K content to address these deficiencies."
+        })
+    
+    elif severe_n_deficiency and severe_p_deficiency:
+        recommendations.append({
+            "fertilizer": "NPK 14-35-14",
+            "rationale": f"Soil is deficient in nitrogen and phosphorus (N: {n_deficit}, P: {p_deficit} kg/ha). This fertilizer has balanced N and higher P content."
+        })
+    
+    else:
+        # If no severe deficiencies or special cases
+        if n_deficit + p_deficit + k_deficit > 30:
+            recommendations.append({
+                "fertilizer": "NPK 17-17-17",
+                "rationale": "Soil has moderate deficiencies across multiple nutrients. A balanced fertilizer will help maintain overall soil fertility."
+            })
+        else:
+            recommendations.append({
+                "fertilizer": "Organic Compost",
+                "rationale": "Soil nutrient levels are relatively adequate. Organic compost is recommended for sustainable soil health improvement."
+            })
+    
+    # Add a second recommendation if applicable
+    if crop and len(recommendations) < 2:
+        for fert_name, fert_data in fertilizer_info.items():
+            if crop.lower() in fert_data["ideal_for"] and fert_name != recommendations[0]["fertilizer"]:
+                recommendations.append({
+                    "fertilizer": fert_name,
+                    "rationale": f"Specifically recommended for {crop} cultivation based on typical crop requirements."
+                })
+                break
+    
+    return recommendations

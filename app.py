@@ -4,20 +4,25 @@ import numpy as np
 import matplotlib.pyplot as plt
 import plotly.express as px
 from crop_recommendation_model import train_model, predict_crop
-from crop_data import crop_info, get_dataset
+from crop_data import crop_info, get_dataset, fertilizer_info, recommend_fertilizer
 
 # Set page configuration
 st.set_page_config(
-    page_title="Crop Recommendation System",
+    page_title="Crop & Fertilizer Recommendation System",
     page_icon="🌱",
     layout="wide"
 )
 
 # App title and description
-st.title("🌱 Crop Recommendation System")
+st.title("🌱 Crop & Fertilizer Recommendation System")
 st.write("""
-This application helps farmers determine the optimal crops to plant based on their local environmental conditions.
-Enter your field's characteristics below to receive personalized crop recommendations.
+This application helps farmers optimize their agricultural practices with:
+
+1. **Crop Recommendations**: Determine the optimal crops to plant based on local environmental conditions
+2. **Fertilizer Recommendations**: Get personalized fertilizer advice based on soil nutrient levels and selected crops
+3. **Soil Analysis**: Visualize soil nutrient deficiencies with interactive charts
+
+Enter your field's characteristics in the sidebar to receive personalized recommendations.
 """)
 
 # Create sidebar for inputs
@@ -144,6 +149,101 @@ if submit_button:
         
         if comparison_data:
             st.table(pd.DataFrame(comparison_data))
+            
+        # Fertilizer recommendation section
+        st.header("Fertilizer Recommendations")
+        
+        # Get fertilizer recommendations for the top crop
+        if top_crops:
+            top_crop = top_crops[0]
+            fertilizer_recs = recommend_fertilizer(n_value, p_value, k_value, top_crop)
+            
+            st.write(f"Based on your soil nutrient levels and the recommended crop ({top_crop}), we suggest:")
+            
+            # Create columns for fertilizer recommendations
+            fert_cols = st.columns(len(fertilizer_recs))
+            
+            for i, rec in enumerate(fertilizer_recs):
+                with fert_cols[i]:
+                    st.subheader(rec["fertilizer"])
+                    st.write(rec["rationale"])
+                    
+                    # Display fertilizer details if available in our database
+                    if rec["fertilizer"] in fertilizer_info:
+                        fert_data = fertilizer_info[rec["fertilizer"]]
+                        st.write("**Details:**")
+                        st.write(f"- {fert_data['description']}")
+                        st.write(f"- N-P-K Content: {fert_data['n_content']}-{fert_data['p_content']}-{fert_data['k_content']}")
+                        st.write(f"- Recommended application: {fert_data['application_rate']}")
+                        st.write(f"- Best time to apply: {fert_data['best_time']}")
+            
+            # Show NPK deficiency visualization
+            st.subheader("Soil Nutrient Analysis")
+            
+            # Define optimal NPK levels for the recommended crop
+            optimal_levels = {"N": 80, "P": 40, "K": 40}
+            if top_crop in ["rice", "maize", "wheat"]:
+                optimal_levels = {"N": 120, "P": 60, "K": 50}
+            elif top_crop in ["vegetables", "tomato", "potato", "cabbage"]:
+                optimal_levels = {"N": 100, "P": 80, "K": 80}
+            
+            # Calculate deficiency percentages
+            n_deficit_pct = max(0, 100 * (1 - (n_value / optimal_levels["N"])))
+            p_deficit_pct = max(0, 100 * (1 - (p_value / optimal_levels["P"])))
+            k_deficit_pct = max(0, 100 * (1 - (k_value / optimal_levels["K"])))
+            
+            # Create a bar chart for nutrient deficiencies
+            nutrient_df = pd.DataFrame({
+                "Nutrient": ["Nitrogen (N)", "Phosphorus (P)", "Potassium (K)"],
+                "Current Level": [n_value, p_value, k_value],
+                "Optimal Level": [optimal_levels["N"], optimal_levels["P"], optimal_levels["K"]],
+                "Deficiency (%)": [n_deficit_pct, p_deficit_pct, k_deficit_pct]
+            })
+            
+            # Create two columns for visualization
+            nutrient_cols = st.columns(2)
+            
+            with nutrient_cols[0]:
+                # Bar chart comparing current vs optimal
+                fig = px.bar(
+                    nutrient_df,
+                    x="Nutrient",
+                    y=["Current Level", "Optimal Level"],
+                    barmode="group",
+                    title=f"Soil Nutrient Levels for {top_crop}",
+                    color_discrete_sequence=["#1E88E5", "#FFC107"]
+                )
+                st.plotly_chart(fig)
+            
+            with nutrient_cols[1]:
+                # Pie chart showing deficiency percentage
+                if any([n_deficit_pct > 0, p_deficit_pct > 0, k_deficit_pct > 0]):
+                    # Only nutrients with deficiency
+                    deficiency_data = []
+                    labels = []
+                    
+                    if n_deficit_pct > 0:
+                        deficiency_data.append(n_deficit_pct)
+                        labels.append("Nitrogen (N)")
+                    if p_deficit_pct > 0:
+                        deficiency_data.append(p_deficit_pct)
+                        labels.append("Phosphorus (P)")
+                    if k_deficit_pct > 0:
+                        deficiency_data.append(k_deficit_pct)
+                        labels.append("Potassium (K)")
+                    
+                    if deficiency_data:
+                        fig = px.pie(
+                            values=deficiency_data,
+                            names=labels,
+                            title="Nutrient Deficiency Distribution",
+                            color_discrete_sequence=px.colors.sequential.Viridis
+                        )
+                        st.plotly_chart(fig)
+                    else:
+                        st.info("Your soil has adequate nutrient levels. No significant deficiencies detected.")
+                else:
+                    st.info("Your soil has adequate nutrient levels. No significant deficiencies detected.")
         
 # Display educational information when no prediction is made yet
 if not submit_button:
@@ -152,10 +252,12 @@ if not submit_button:
     1. Enter your field's environmental conditions in the sidebar
     2. Our system analyzes these conditions using a machine learning model
     3. You'll receive personalized crop recommendations with confidence scores
-    4. Review detailed information about each recommended crop
+    4. Get fertilizer recommendations based on soil nutrient levels and selected crops
+    5. Review detailed information and visualizations for optimal agricultural decisions
     
     The model considers factors like soil nutrients (N, P, K), temperature, humidity, pH, and rainfall
-    to determine which crops would thrive in your specific conditions.
+    to determine which crops would thrive in your specific conditions and what fertilizers would 
+    optimize your soil health and crop yield.
     """)
     
     # Show sample crops and their general requirements
@@ -171,6 +273,32 @@ if not submit_button:
     ], columns=["Crop", "Temperature", "pH Range", "Water Requirement"])
     
     st.table(sample_data)
+    
+    # Show sample fertilizer information
+    st.header("Common Fertilizers")
+    
+    col1, col2 = st.columns(2)
+    with col1:
+        st.subheader("NPK Fertilizers")
+        st.write("""
+        NPK fertilizers contain three primary nutrients:
+        - **Nitrogen (N)**: Promotes leaf growth and greening
+        - **Phosphorus (P)**: Enhances root and flower development 
+        - **Potassium (K)**: Improves overall plant health and disease resistance
+        
+        Common NPK formulations include 17-17-17 (balanced), 10-26-26 (root development), 
+        and 14-35-14 (flowering enhancement).
+        """)
+    
+    with col2:
+        st.subheader("Single-Nutrient Fertilizers")
+        st.write("""
+        These fertilizers focus on a specific nutrient deficiency:
+        - **Urea**: High nitrogen (46%) for leaf development
+        - **DAP**: High phosphorus (46%) with some nitrogen (18%)
+        - **MOP**: High potassium (60-62%) for fruit development
+        - **SSP**: Provides phosphorus (16%) along with sulfur and calcium
+        """)
     
     st.info("""
     **Tip:** The more accurate your input values, the better the recommendations will be.
