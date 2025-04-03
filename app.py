@@ -270,8 +270,14 @@ if submit_button:
                 'k_value': k_value
             }
             
-            # Generate PDF
-            if st.button("Generate PDF Report"):
+            # Create PDF generation button
+            pdf_col1, pdf_col2 = st.columns([2, 3])
+            
+            with pdf_col1:
+                generate_pdf = st.button("Generate PDF Report")
+                
+            # Generate PDF when button is clicked
+            if generate_pdf:
                 with st.spinner("Generating PDF Report..."):
                     # Create the PDF report
                     b64_pdf = create_pdf_report(
@@ -284,13 +290,20 @@ if submit_button:
                         crop_info=crop_info
                     )
                     
-                    # Display download link
-                    st.markdown(
-                        get_download_link(b64_pdf, "crop_fertilizer_report.pdf"),
-                        unsafe_allow_html=True
+                    # Convert base64 to bytes for download button
+                    import base64
+                    pdf_bytes = base64.b64decode(b64_pdf)
+                    
+                    # Create download button
+                    st.download_button(
+                        label="Download PDF Report",
+                        data=pdf_bytes,
+                        file_name="crop_fertilizer_report.pdf",
+                        mime="application/pdf",
+                        key='pdf-download'
                     )
                     
-                    st.success("PDF Report Generated Successfully! Click the link above to download.")
+                    st.success("PDF Report Generated! Click the download button above.")
         
 # Display educational information when no prediction is made yet
 if not submit_button:

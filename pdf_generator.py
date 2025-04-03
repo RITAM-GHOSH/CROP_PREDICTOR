@@ -236,5 +236,16 @@ def get_download_link(b64_pdf, filename="crop_fertilizer_report.pdf"):
     Returns:
         HTML download link
     """
-    href = f'<a href="data:application/pdf;base64,{b64_pdf}" download="{filename}">Download PDF Report</a>'
-    return href
+    # Create a Streamlit download button for more reliability than raw HTML
+    import streamlit as st
+    
+    # Convert base64 to bytes for download button
+    pdf_bytes = base64.b64decode(b64_pdf)
+    
+    # Use Streamlit's download button
+    return st.download_button(
+        label="Download PDF Report",
+        data=pdf_bytes,
+        file_name=filename,
+        mime="application/pdf"
+    )
