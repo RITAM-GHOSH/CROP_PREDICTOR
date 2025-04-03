@@ -3,9 +3,14 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 import plotly.express as px
+import os
 from crop_recommendation_model import train_model, predict_crop
 from crop_data import crop_info, get_dataset, fertilizer_info, recommend_fertilizer
 from reportlab_pdf import create_pdf_report
+from settings import load_settings, settings_page
+
+# Load email settings
+load_settings()
 
 # Set page configuration
 st.set_page_config(
@@ -14,53 +19,71 @@ st.set_page_config(
     layout="wide"
 )
 
-# App title and description
-st.title("🌱 Crop & Fertilizer Recommendation System")
-st.write("""
-This application helps farmers optimize their agricultural practices with:
+# Page navigation in sidebar
+st.sidebar.title("Navigation")
+page = st.sidebar.radio("Go to", ["Home", "Settings"])
 
-1. **Crop Recommendations**: Determine the optimal crops to plant based on local environmental conditions
-2. **Fertilizer Recommendations**: Get personalized fertilizer advice based on soil nutrient levels and selected crops
-3. **Soil Analysis**: Visualize soil nutrient deficiencies with interactive charts
-4. **PDF Reports**: Download comprehensive reports for offline reference and sharing
+if page == "Home":
+    # App title and description
+    st.title("🌱 Crop & Fertilizer Recommendation System")
+    st.write("""
+    This application helps farmers optimize their agricultural practices with:
 
-Enter your field's characteristics in the sidebar to receive personalized recommendations.
-""")
+    1. **Crop Recommendations**: Determine the optimal crops to plant based on local environmental conditions
+    2. **Fertilizer Recommendations**: Get personalized fertilizer advice based on soil nutrient levels and selected crops
+    3. **Soil Analysis**: Visualize soil nutrient deficiencies with interactive charts
+    4. **PDF Reports**: Download comprehensive reports for offline reference and sharing
 
-# Create sidebar for inputs
-st.sidebar.header("Field Conditions")
+    Enter your field's characteristics in the sidebar to receive personalized recommendations.
+    """)
 
-# Input form for environmental conditions
-with st.sidebar.form("input_form"):
-    # Soil type selection
-    soil_type = st.selectbox(
-        "Soil Type",
-        options=["Clay", "Sandy", "Loamy", "Black", "Red", "Clayey"],
-        help="Select the type of soil in your field"
-    )
+# Initialize variables to avoid "possibly unbound" errors
+submit_button = False
+soil_type = "Loamy"
+n_value = 50
+p_value = 50
+k_value = 50
+temperature = 25.0
+humidity = 65.0
+ph_value = 6.5
+rainfall = 100.0
+
+# Only display field conditions form on the Home page
+if page == "Home":
+    # Create sidebar for inputs
+    st.sidebar.header("Field Conditions")
+
+    # Input form for environmental conditions
+    with st.sidebar.form("input_form"):
+        # Soil type selection
+        soil_type = st.selectbox(
+            "Soil Type",
+            options=["Clay", "Sandy", "Loamy", "Black", "Red", "Clayey"],
+            help="Select the type of soil in your field"
+        )
     
-    # Numerical inputs with appropriate ranges
-    n_value = st.slider("Nitrogen (N) Content (kg/ha)", 0, 140, 50, help="Amount of nitrogen in the soil")
-    p_value = st.slider("Phosphorus (P) Content (kg/ha)", 5, 145, 50, help="Amount of phosphorus in the soil")
-    k_value = st.slider("Potassium (K) Content (kg/ha)", 5, 205, 50, help="Amount of potassium in the soil")
-    
-    # Temperature input
-    temperature = st.slider("Temperature (°C)", 8.0, 44.0, 25.0, help="Average temperature in your area")
-    
-    # Humidity input
-    humidity = st.slider("Humidity (%)", 14.0, 100.0, 65.0, help="Average humidity percentage in your area")
-    
-    # pH input
-    ph_value = st.slider("pH Value", 3.5, 10.0, 6.5, help="pH level of your soil")
-    
-    # Rainfall input
-    rainfall = st.slider("Rainfall (mm)", 20.0, 300.0, 100.0, help="Average rainfall in your area")
-    
-    # Submit button
-    submit_button = st.form_submit_button("Get Recommendations")
+        # Numerical inputs with appropriate ranges
+        n_value = st.slider("Nitrogen (N) Content (kg/ha)", 0, 140, 50, help="Amount of nitrogen in the soil")
+        p_value = st.slider("Phosphorus (P) Content (kg/ha)", 5, 145, 50, help="Amount of phosphorus in the soil")
+        k_value = st.slider("Potassium (K) Content (kg/ha)", 5, 205, 50, help="Amount of potassium in the soil")
+        
+        # Temperature input
+        temperature = st.slider("Temperature (°C)", 8.0, 44.0, 25.0, help="Average temperature in your area")
+        
+        # Humidity input
+        humidity = st.slider("Humidity (%)", 14.0, 100.0, 65.0, help="Average humidity percentage in your area")
+        
+        # pH input
+        ph_value = st.slider("pH Value", 3.5, 10.0, 6.5, help="pH level of your soil")
+        
+        # Rainfall input
+        rainfall = st.slider("Rainfall (mm)", 20.0, 300.0, 100.0, help="Average rainfall in your area")
+        
+        # Submit button
+        submit_button = st.form_submit_button("Get Recommendations")
 
 # Main area for displaying results
-if submit_button:
+if page == "Home" and submit_button:
     # Show a spinner while processing
     with st.spinner("Analyzing your field conditions..."):
         # Load and train the model
@@ -290,19 +313,104 @@ if submit_button:
                         crop_info=crop_info
                     )
                     
-                    # Create download button using raw bytes
-                    st.download_button(
-                        label="Download PDF Report",
-                        data=pdf_bytes,
-                        file_name="crop_fertilizer_report.pdf",
-                        mime="application/pdf",
-                        key='pdf-download'
-                    )
+                    st.success("PDF Report Generated! You can now download or email it.")
                     
-                    st.success("PDF Report Generated! Click the download button above.")
+                    # Create columns for download and email buttons
+                    download_col, email_col = st.columns(2)
+                    
+                    # Download button
+                    with download_col:
+                        st.download_button(
+                            label="Download PDF Report",
+                            data=pdf_bytes,
+                            file_name="crop_fertilizer_report.pdf",
+                            mime="application/pdf",
+                            key='pdf-download'
+                        )
+                    
+                    # Email section
+                    with email_col:
+                        # Add email input
+                        email_address = st.text_input("Email address to send the report to:", placeholder="your.email@example.com")
+                        
+                        # Email button
+                        if st.button("Email PDF Report"):
+                            if email_address and "@" in email_address:
+                                # Here we'll add the email sending logic
+                                with st.spinner("Sending email..."):
+                                    try:
+                                        import smtplib
+                                        from email.mime.multipart import MIMEMultipart
+                                        from email.mime.base import MIMEBase
+                                        from email.mime.text import MIMEText
+                                        from email.utils import formatdate
+                                        from email import encoders
+                                        
+                                        # Check if we have environment variables for email
+                                        import os
+                                        
+                                        # Ask for email credentials if not already set
+                                        if not os.environ.get('EMAIL_PASSWORD'):
+                                            st.error("Email configuration required. Please ask the administrator to set up email credentials.")
+                                        else:
+                                            # Setup email
+                                            sender_email = os.environ.get('EMAIL_USER', 'cropadviser@example.com')
+                                            sender_password = os.environ.get('EMAIL_PASSWORD')
+                                            
+                                            msg = MIMEMultipart()
+                                            msg['From'] = sender_email
+                                            msg['To'] = email_address
+                                            msg['Date'] = formatdate(localtime=True)
+                                            msg['Subject'] = "Your Crop & Fertilizer Recommendation Report"
+                                            
+                                            # Email body
+                                            email_body = f"""
+                                            Hello,
+                                            
+                                            Thank you for using our Crop & Fertilizer Recommendation System.
+                                            
+                                            Attached is your personalized report based on the field conditions you provided.
+                                            
+                                            Top recommended crop: {top_crops[0] if top_crops else 'N/A'}
+                                            
+                                            This report includes detailed recommendations for crops, fertilizers, and soil analysis
+                                            to help optimize your agricultural practices.
+                                            
+                                            Regards,
+                                            Crop & Fertilizer Recommendation System
+                                            """
+                                            
+                                            msg.attach(MIMEText(email_body))
+                                            
+                                            # Attach PDF
+                                            part = MIMEBase('application', 'pdf')
+                                            part.set_payload(pdf_bytes)
+                                            encoders.encode_base64(part)
+                                            part.add_header('Content-Disposition', 'attachment', filename="crop_fertilizer_report.pdf")
+                                            msg.attach(part)
+                                            
+                                            # Connect to server and send email
+                                            smtp_server = os.environ.get('SMTP_SERVER', 'smtp.gmail.com')
+                                            smtp_port = int(os.environ.get('SMTP_PORT', 587))
+                                            
+                                            with smtplib.SMTP(smtp_server, smtp_port) as server:
+                                                server.starttls()
+                                                server.login(sender_email, sender_password)
+                                                server.sendmail(sender_email, email_address, msg.as_string())
+                                            
+                                            st.success(f"Email sent successfully to {email_address}!")
+                                    except Exception as e:
+                                        st.error(f"Failed to send email: {str(e)}")
+                                        st.info("For testing purposes, you can use the download option instead.")
+                            else:
+                                st.error("Please enter a valid email address.")
         
-# Display educational information when no prediction is made yet
-if not submit_button:
+# Settings page
+elif page == "Settings":
+    settings_page()
+
+# Display educational information when on Home page but no form submitted
+if page == "Home" and not submit_button:
     st.header("How it works")
     st.write("""
     1. Enter your field's environmental conditions in the sidebar
