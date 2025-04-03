@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 import plotly.express as px
 from crop_recommendation_model import train_model, predict_crop
 from crop_data import crop_info, get_dataset, fertilizer_info, recommend_fertilizer
-from pdf_generator import create_pdf_report, get_download_link
+from reportlab_pdf import create_pdf_report
 
 # Set page configuration
 st.set_page_config(
@@ -280,7 +280,7 @@ if submit_button:
             if generate_pdf:
                 with st.spinner("Generating PDF Report..."):
                     # Create the PDF report
-                    b64_pdf = create_pdf_report(
+                    b64_pdf, pdf_bytes = create_pdf_report(
                         field_conditions=field_conditions,
                         top_crops=top_crops,
                         top_probs=top_probs,
@@ -290,11 +290,7 @@ if submit_button:
                         crop_info=crop_info
                     )
                     
-                    # Convert base64 to bytes for download button
-                    import base64
-                    pdf_bytes = base64.b64decode(b64_pdf)
-                    
-                    # Create download button
+                    # Create download button using raw bytes
                     st.download_button(
                         label="Download PDF Report",
                         data=pdf_bytes,
