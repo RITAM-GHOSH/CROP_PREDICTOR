@@ -19,9 +19,36 @@ st.set_page_config(
     layout="wide"
 )
 
-# Page navigation in sidebar
-st.sidebar.title("Navigation")
-page = st.sidebar.radio("Go to", ["Home", "Settings"])
+# Page navigation
+# Add CSS for mobile responsiveness
+st.markdown("""
+<style>
+    .block-container {
+        padding-top: 1rem;
+        padding-bottom: 1rem;
+    }
+    
+    /* Mobile view adjustments */
+    @media (max-width: 768px) {
+        .stRadio > div {
+            flex-direction: row !important;
+            justify-content: center !important;
+        }
+        .stRadio > div > label {
+            padding: 0.5rem !important;
+            margin: 0 0.5rem !important;
+        }
+        div[data-testid="stHorizontalBlock"] {
+            flex-wrap: wrap;
+        }
+    }
+</style>
+""", unsafe_allow_html=True)
+
+# Use horizontal radio buttons at top for better mobile experience
+col1, col2, col3 = st.columns([1, 2, 1])
+with col2:
+    page = st.radio("Navigation", ["Home", "Settings"], horizontal=True)
 
 if page == "Home":
     # App title and description
@@ -35,6 +62,7 @@ if page == "Home":
     4. **PDF Reports**: Download comprehensive reports for offline reference and sharing
 
     Enter your field's characteristics in the sidebar to receive personalized recommendations.
+    This application is optimized for both desktop and mobile devices.
     """)
 
 # Initialize variables to avoid "possibly unbound" errors
@@ -50,10 +78,33 @@ rainfall = 100.0
 
 # Only display field conditions form on the Home page
 if page == "Home":
+    # Add option to toggle sidebar on mobile devices
+    st.markdown("""
+    <style>
+    /* Hide sidebar toggle on mobile */
+    .css-1rs6os span {
+        padding-left: 0.5rem;
+        padding-right: 0.5rem;
+    }
+    
+    /* Make sidebar more compact on mobile */
+    @media (max-width: 768px) {
+        section[data-testid="stSidebar"] .block-container {
+            padding-top: 0.5rem;
+            padding-bottom: 0.5rem;
+        }
+        section[data-testid="stSidebar"] div.stSlider {
+            padding-left: 0;
+            padding-right: 0;
+        }
+    }
+    </style>
+    """, unsafe_allow_html=True)
+    
     # Create sidebar for inputs
     st.sidebar.header("Field Conditions")
-
-    # Input form for environmental conditions
+    
+    # Input form for environmental conditions 
     with st.sidebar.form("input_form"):
         # Soil type selection
         soil_type = st.selectbox(
