@@ -149,6 +149,99 @@ You can customize the application by modifying the following:
 
 Contributions are welcome! Please feel free to submit a Pull Request.
 
+## Deployment on Railway
+
+### Prerequisites
+- GitHub account
+- Railway.app account
+- Your project pushed to a GitHub repository
+
+### Deployment Steps
+
+1. **Log in to Railway**
+
+   Go to [Railway.app](https://railway.app/) and log in using your GitHub account or create a new account.
+
+2. **Create a New Project**
+
+   - Click on "New Project"
+   - Select "Deploy from GitHub repo"
+   - Choose the repository containing this application
+   - Click "Deploy Now"
+
+3. **Configure Environment Variables**
+
+   - Go to your project on Railway
+   - Navigate to the "Variables" tab
+   - Add the following variables if you want to use email functionality:
+     - `EMAIL_USER`: Your email address
+     - `EMAIL_PASSWORD`: Your email password or app password
+     - `SMTP_SERVER`: SMTP server (default: smtp.gmail.com)
+     - `SMTP_PORT`: SMTP port (default: 587)
+
+4. **Monitor Deployment**
+
+   - Railway will automatically detect the application as a Python app
+   - It will use the requirements.txt file to install dependencies
+   - The deployment status can be monitored in the "Deployments" tab
+
+5. **Access Your Application**
+
+   - Once deployed, Railway will provide a URL to access your application
+   - Click on the domain name in the "Settings" tab to view your live application
+
+### Troubleshooting Railway Deployment
+
+- **Build Failures**: Check the build logs for errors and ensure all dependencies are correctly listed in requirements.txt
+- **Runtime Errors**: Check the logs in the "Deployments" tab for runtime errors
+- **Custom Domain**: You can configure a custom domain in the "Settings" tab
+
 ## License
 
 [MIT License](LICENSE)
+## Deployment on Railway
+
+### Prerequisites
+- GitHub account
+- Railway.app account
+- Your project pushed to a GitHub repository
+
+### Deployment Steps
+
+1. **Log in to Railway**
+
+   Go to [Railway.app](https://railway.app/) and log in using your GitHub account or create a new account.
+
+2. **Create a New Project**
+
+   - Click on "New Project"
+   - Select "Deploy from GitHub repo"
+   - Choose the repository containing this application
+   - Click "Deploy Now"
+
+3. **Configure Environment Variables**
+
+   - Go to your project on Railway
+   - Navigate to the "Variables" tab
+   - Add the following variables if you want to use email functionality:
+     - `EMAIL_USER`: Your email address
+     - `EMAIL_PASSWORD`: Your email password or app password
+     - `SMTP_SERVER`: SMTP server (default: smtp.gmail.com)
+     - `SMTP_PORT`: SMTP port (default: 587)
+
+4. **Monitor Deployment**
+
+   - Railway will automatically detect the application as a Python app
+   - It will use the requirements.txt file to install dependencies
+   - The deployment status can be monitored in the "Deployments" tab
+
+5. **Access Your Application**
+
+   - Once deployed, Railway will provide a URL to access your application
+   - Click on the domain name in the "Settings" tab to view your live application
+
+### Troubleshooting Railway Deployment
+
+- **Build Failures**: Check the build logs for errors and ensure all dependencies are correctly listed in requirements.txt
+- **Runtime Errors**: Check the logs in the "Deployments" tab for runtime errors
+- **Custom Domain**: You can configure a custom domain in the "Settings" tab
